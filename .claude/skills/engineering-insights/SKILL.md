@@ -1,6 +1,6 @@
 ---
 name: engineering-insights
-description: Records non-obvious findings from a finished coding task into the INSIGHTS.md of the package that was touched (client, server, reviewer-core, e2e). Use at the end of any task that changed code and hit something a reader of the code would not guess - a hidden dependency, a fix for a confusing error, a measured fact, a dead end. Also use mid-task right after such a discovery is confirmed.
+description: Records non-obvious findings from a finished coding task into the INSIGHTS.md of the package that was touched (client, server, reviewer-core, e2e). Use at the end of any task that changed code and hit something a reader of the code would not guess - a hidden dependency, a fix for a confusing error, a measured fact, a dead end. Also use mid-task right after such a discovery is confirmed, on "wrap up" / "retro", or when /engineering-insights is invoked. Append-only - never overwrites.
 ---
 
 # engineering-insights
@@ -8,6 +8,8 @@ description: Records non-obvious findings from a finished coding task into the I
 Goal: the next session starts already knowing what this one learned.
 
 ## Steps
+0. Gate check: did this session solve a problem, make a decision or discover
+   something non-obvious? If not, write only the Session Notes line and stop.
 1. List the packages this task touched: client/, server/, reviewer-core/, e2e/.
    (repo-intel lives in server/.)
 2. For each, collect candidate findings from this session. Keep a finding only if
@@ -22,6 +24,12 @@ Goal: the next session starts already knowing what this one learned.
    `- YYYY-MM-DD · <finding> · evidence: <path>:<line>`
 5. Add one line under "Session Notes": date, task, what you appended (or "nothing new").
 6. Tell the user in one line per package what you appended.
+
+## Write safely (hard rule)
+- Re-read the target INSIGHTS.md right before writing; it may have changed.
+- Add entries only with an anchored Edit under the right `##` heading.
+  NEVER use the Write tool on an existing INSIGHTS.md - it replaces the whole file.
+- Keep every existing heading and entry exactly as it is.
 
 ## Sections
 - What Works - an approach that worked here

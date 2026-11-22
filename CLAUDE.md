@@ -6,13 +6,18 @@ Local-first AI PR reviewer. Course starter: the base flow works end to end; each
 Always search the relevant package's `docs/`, `specs/` and `INSIGHTS.md` for what the
 user asks about FIRST - they are curated and may already answer it - then read code.
 
+## Session protocol (insights loop)
+- Start: before touching a package, read its `INSIGHTS.md` and summarize the top 3
+  relevant points back. This proves the file was really read.
+- End: when a code task is done, run /engineering-insights. Do not skip the check,
+  even if it ends with "nothing new".
+
 ## Conventions (not obvious from code)
 - NOT a monorepo workspace - each package has its own package.json/lockfile; cross-package
   code is shared via tsconfig path aliases.
 - `@devdigest/shared` contracts live in two copies: `server/src/vendor/shared/` and
   `client/src/vendor/shared/`. Extend with NEW files; never edit existing ones.
 - Before you say "done": typecheck + unit tests in every package you touched.
-- When a code task is done, run /engineering-insights to update INSIGHTS.md. Do not skip this.
 
 ## Do-not-touch
 - Existing files in `vendor/shared/` and `server/src/db/migrations/` - never hand-edit.
