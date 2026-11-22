@@ -15,6 +15,23 @@ export const s = {
     background: "var(--border)",
     margin: "0 2px",
   } satisfies CSSProperties,
+  counters: { display: "flex", alignItems: "center", gap: 8 } satisfies CSSProperties,
+  counterBtn: {
+    border: "none",
+    background: "none",
+    padding: 0,
+    borderRadius: 5,
+    cursor: "pointer",
+  } satisfies CSSProperties,
+  clearBtn: {
+    border: "none",
+    background: "none",
+    padding: 0,
+    fontSize: 12,
+    color: "var(--text-muted)",
+    textDecoration: "underline",
+    cursor: "pointer",
+  } satisfies CSSProperties,
   toggleGroup: {
     marginLeft: "auto",
     display: "flex",

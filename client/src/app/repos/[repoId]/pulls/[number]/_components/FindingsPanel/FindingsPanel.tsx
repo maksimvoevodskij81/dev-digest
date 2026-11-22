@@ -1,15 +1,15 @@
-/* FindingsPanel — hide-low-confidence + j/k navigation + FindingCard list,
-   wiring the accept/dismiss action hook (A2). */
+/* FindingsPanel — severity counters/filter + hide-low-confidence + j/k navigation
+   + FindingCard list, wiring the accept/dismiss action hook (A2). */
 "use client";
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { Toggle, EmptyState } from "@devdigest/ui";
-import type { FindingRecord } from "@devdigest/shared";
+import { Toggle, EmptyState, SeverityBadge, SEV } from "@devdigest/ui";
+import type { FindingRecord, Severity } from "@devdigest/shared";
 import { FindingCard } from "../FindingCard";
 import { useFindingAction } from "../../../../../../../lib/hooks/reviews";
-import { KEY_TO_ACTION } from "./constants";
-import { visibleFindings } from "./helpers";
+import { KEY_TO_ACTION, SEVERITY_LEVELS } from "./constants";
+import { confidentFindings, countBySeverity, visibleFindings } from "./helpers";
 import { s } from "./styles";
 
 export function FindingsPanel({
@@ -26,9 +26,23 @@ export function FindingsPanel({
   const t = useTranslations("prReview");
   const action = useFindingAction();
   const [hideLow, setHideLow] = React.useState(false);
+  const [severity, setSeverity] = React.useState<Severity | null>(null);
   const [focusIdx, setFocusIdx] = React.useState(0);
 
-  const shown = React.useMemo(() => visibleFindings(findings, hideLow), [findings, hideLow]);
+  // Counters follow the hide-low toggle, so each number matches what a click would show.
+  const counts = React.useMemo(
+    () => countBySeverity(confidentFindings(findings, hideLow)),
+    [findings, hideLow],
+  );
+  const shown = React.useMemo(
+    () => visibleFindings(findings, hideLow, severity),
+    [findings, hideLow, severity],
+  );
+
+  const pickSeverity = (level: Severity | null) => {
+    setSeverity((cur) => (cur === level ? null : level));
+    setFocusIdx(0);
+  };
 
   // j/k navigation + a/d shortcuts on the focused finding (keyboard).
   React.useEffect(() => {
@@ -48,6 +62,34 @@ export function FindingsPanel({
   return (
     <div>
       <div style={s.toolbar}>
+        <div style={s.counters} role="group" aria-label={t("panel.severityFilter")}>
+          {SEVERITY_LEVELS.map((level) => {
+            const active = severity === level;
+            const empty = counts[level] === 0;
+            return (
+              <button
+                key={level}
+                type="button"
+                aria-pressed={active}
+                disabled={empty && !active}
+                onClick={() => pickSeverity(level)}
+                style={{
+                  ...s.counterBtn,
+                  opacity: empty && !active ? 0.45 : severity && !active ? 0.6 : 1,
+                  cursor: empty && !active ? "default" : "pointer",
+                  outline: active ? `1px solid ${SEV[level].c}` : "none",
+                }}
+              >
+                <SeverityBadge severity={level} count={counts[level]} />
+              </button>
+            );
+          })}
+          {severity && (
+            <button type="button" onClick={() => pickSeverity(null)} style={s.clearBtn}>
+              {t("panel.clearFilter")}
+            </button>
+          )}
+        </div>
         <div style={s.toggleGroup}>
           {t("panel.hideLowConfidence")}
           <Toggle on={hideLow} onChange={setHideLow} size={16} />
