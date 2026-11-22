@@ -1,6 +1,6 @@
 ---
 name: engineering-insights
-description: Records non-obvious findings from a finished coding task into the INSIGHTS.md of the package that was touched (client, server, reviewer-core, e2e). Use at the end of any task that changed code and hit something a reader of the code would not guess - a hidden dependency, a fix for a confusing error, a measured fact, a dead end. Also use mid-task right after such a discovery is confirmed, on "wrap up" / "retro", or when /engineering-insights is invoked. Append-only - never overwrites.
+description: Use when a coding task is done or wrapping up ("done", "wrap up", "retro", "what did we learn", before a commit or PR), right after a fix that took more than one try, after the user corrected you, or when /engineering-insights is invoked. Appends non-obvious, confirmed findings to the touched package's INSIGHTS.md (client, server, reviewer-core, e2e). Append-only - never overwrites.
 ---
 
 # engineering-insights
@@ -12,18 +12,27 @@ Goal: the next session starts already knowing what this one learned.
    something non-obvious? If not, write only the Session Notes line and stop.
 1. List the packages this task touched: client/, server/, reviewer-core/, e2e/.
    (repo-intel lives in server/.)
-2. For each, collect candidate findings from this session. Keep a finding only if
-   it passes all three:
+2. Collect candidate findings. Look for these signals, most important first:
+   - the user corrected you;
+   - an error fixed only after a failed try;
+   - an approach you dropped, and why;
+   - "it turned out that..." - the code did not work the way it looked;
+   - a surprising library or tool behaviour.
+   Keep a finding only if it passes all three:
    - Not obvious: someone reading the code would not see it at once.
    - Actionable cold: an agent reading only this line knows what to do.
    - Confirmed: you saw it work or fail, not a guess.
+   If it applies to all packages or is a standing rule, do not write it here -
+   propose it for CLAUDE.md in step 6.
 3. Read that package's INSIGHTS.md. Skip anything already there.
-   If a new finding contradicts an old one, add a new dated entry that says so.
-   Never edit or delete old entries.
-4. Append each finding under the right section, in this format:
-   `- YYYY-MM-DD · <finding> · evidence: <path>:<line>`
+   If a new finding contradicts an old one, add a new entry with
+   `supersedes: <date of old entry>`. Never edit or delete old entries.
+4. Append each finding under the right section, one line, max 2 sentences:
+   `- YYYY-MM-DD · <finding> · evidence: <path>:<line> (<symbolName>)`
 5. Add one line under "Session Notes": date, task, what you appended (or "nothing new").
-6. Tell the user in one line per package what you appended.
+6. Tell the user in one line per package what you appended. Also list any
+   CLAUDE.md proposals, and suggest a cleanup if the file has more than ~80 entries
+   (only suggest - do not clean up yourself).
 
 ## Write safely (hard rule)
 - Re-read the target INSIGHTS.md right before writing; it may have changed.
