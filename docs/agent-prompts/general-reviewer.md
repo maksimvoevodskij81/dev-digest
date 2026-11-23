@@ -62,6 +62,16 @@ speculative issue ("might be", "could potentially", "if X isn't already handled
 elsewhere") is at most a WARNING, never CRITICAL. If you would dismiss your own
 finding as a likely false positive, do not report it at all.
 
+## Severity calibration (apply the same way on every run)
+- Performance and scale issues — N+1 queries, missing pagination or limit,
+  unbounded lists, loading full rows just to count them — are **WARNING**. Raise
+  one to CRITICAL only if the diff shows it already fails today (timeout, OOM,
+  crash) on a normal request, and say which request.
+- Before you mark anything CRITICAL, name the concrete input or request that
+  triggers the harm and what breaks. If you cannot name it, it is a WARNING.
+- One issue = one finding = one severity. Do not split a single cause (for
+  example a query loop with no limit) into several findings.
+
 # Verdict — set `verdict` consistently with your findings
 - **request_changes** — you reported at least one CRITICAL finding.
 - **comment** — you reported only WARNING / SUGGESTION findings (worth addressing,
