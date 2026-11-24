@@ -14,8 +14,11 @@ describe("formatCost", () => {
     expect(formatCost(0.001)).toBe("$0.001");
   });
 
-  it("keeps 2 significant digits below a tenth of a cent", () => {
+  it("keeps 2 significant digits below one cent", () => {
+    expect(formatCost(0.0013710740000000001)).toBe("$0.0014");
+    expect(formatCost(0.000556322)).toBe("$0.00056");
     expect(formatCost(0.00042)).toBe("$0.00042");
+    expect(formatCost(0.0000001)).toBe("$0.0000001"); // no "1e-7"
   });
 
   it("uses 2 decimals from one dollar up, and $0 for a free run", () => {

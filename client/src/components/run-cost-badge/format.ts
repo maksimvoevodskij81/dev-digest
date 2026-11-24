@@ -6,14 +6,24 @@ export const NO_DATA = "—";
 /**
  * USD cost of one run. Null/undefined → "—" (never "$0.00": unknown is not free).
  * Reviews usually cost fractions of a cent, so keep at least 3 decimals
- * ("$0.012", not "$0.01"); below $0.001 keep 2 significant digits ("$0.00042").
+ * ("$0.012", not "$0.01"); below one cent keep 2 significant digits
+ * ("$0.0014", "$0.00042"), with no trailing zeros past 3 decimals ("$0.001").
  */
 export function formatCost(usd: number | null | undefined): string {
   if (usd == null || !Number.isFinite(usd) || usd < 0) return NO_DATA;
   if (usd === 0) return "$0";
   if (usd >= 1) return `$${usd.toFixed(2)}`;
-  if (usd >= 0.001) return `$${usd.toFixed(3)}`;
-  return `$${usd.toPrecision(2)}`;
+  if (usd >= 0.01) return `$${usd.toFixed(3)}`;
+  const decimals = Math.max(3, 1 - Math.floor(Math.log10(usd)));
+  return `$${trimTrailingZeros(usd.toFixed(decimals), 3)}`;
+}
+
+/** "0.0010" → "0.001": drop trailing zeros, but keep at least `min` decimals. */
+function trimTrailingZeros(s: string, min: number): string {
+  const dot = s.indexOf(".");
+  let end = s.length;
+  while (end > dot + 1 + min && s[end - 1] === "0") end--;
+  return s.slice(0, end);
 }
 
 /** Token count, short: 820 → "820", 8_240 → "8.2K", 1_250_000 → "1.3M". */
