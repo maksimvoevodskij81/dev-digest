@@ -1,6 +1,7 @@
 import type { Db } from '../../db/client.js';
 import * as t from '../../db/schema.js';
-import type { Finding, Intent, RunSummary, RunTrace } from '@devdigest/shared';
+import type { Finding, Intent, RunTrace } from '@devdigest/shared';
+import type { RunSummaryWithCost } from '@devdigest/shared/contracts/run-cost.js';
 
 /**
  * A2 — review data-access. The ONLY layer touching the DB for the review
@@ -78,7 +79,7 @@ export class ReviewRepository {
   }
 
   /** All runs for a PR (any status), newest first — the PR run history. */
-  listRunsForPull(workspaceId: string, prId: string): Promise<RunSummary[]> {
+  listRunsForPull(workspaceId: string, prId: string): Promise<RunSummaryWithCost[]> {
     return runRepo.listRunsForPull(this.db, workspaceId, prId);
   }
 
@@ -161,6 +162,8 @@ export class ReviewRepository {
       score?: number | null;
       /** Findings that tripped the agent's gate; 0 on failed/cancelled runs. */
       blockers?: number | null;
+      /** Run cost in USD; null = unknown (failed/cancelled or no price). */
+      costUsd?: number | null;
       /** Failure reason (status='failed') / cancellation note. Null clears it. */
       error?: string | null;
     },

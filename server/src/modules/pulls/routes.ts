@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { PrMeta, PrDetail, GitHubClient, PrReviewComment } from '@devdigest/shared';
+import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm';
+import { latestReviewCost } from './run-cost.js';
+import type { PrDetail, GitHubClient, PrReviewComment } from '@devdigest/shared';
+import type { PrMetaWithCost } from '@devdigest/shared/contracts/run-cost.js';
 import { PrCommentInput } from '@devdigest/shared';
 import * as t from '../../db/schema.js';
 import { getContext } from '../_shared/context.js';
@@ -23,7 +25,7 @@ export default async function pullsRoutes(appBase: FastifyInstance) {
   const app = appBase.withTypeProvider<ZodTypeProvider>();
   const { container } = app;
 
-  app.get('/repos/:id/pulls', { schema: { params: IdParams } }, async (req): Promise<PrMeta[]> => {
+  app.get('/repos/:id/pulls', { schema: { params: IdParams } }, async (req): Promise<PrMetaWithCost[]> => {
     const { workspaceId } = await getContext(container, req);
     const [repo] = await container.db
       .select()
@@ -117,6 +119,12 @@ export default async function pullsRoutes(appBase: FastifyInstance) {
     // not surfaced on the list — findings live on the PR detail page.)
     const prIds = rows.map((r) => r.id);
     const latestReviewByPr = new Map<string, { score: number | null }>();
+    // COST of the latest review per PR for the list's cost column (L01 lab:
+    // "the $ of the last run"). "Run all agents" starts several runs at once,
+    // so the latest review = every priced run close in time to the newest one
+    // (see latestReviewCost). Runs without a cost are left out, never counted
+    // as $0. No priced run → no entry → the client shows "—".
+    const costByPr = new Map<string, number>();
     if (prIds.length > 0) {
       const reviewRows = await container.db
         .select({ prId: t.reviews.prId, score: t.reviews.score })
@@ -126,6 +134,28 @@ export default async function pullsRoutes(appBase: FastifyInstance) {
       // Rows are newest-first → first seen per PR is the latest review.
       for (const rv of reviewRows) {
         if (!latestReviewByPr.has(rv.prId)) latestReviewByPr.set(rv.prId, { score: rv.score });
+      }
+
+      const runRows = await container.db
+        .select({ prId: t.agentRuns.prId, ranAt: t.agentRuns.ranAt, costUsd: t.agentRuns.costUsd })
+        .from(t.agentRuns)
+        .where(
+          and(
+            eq(t.agentRuns.workspaceId, workspaceId),
+            inArray(t.agentRuns.prId, prIds),
+            isNotNull(t.agentRuns.costUsd),
+          ),
+        );
+      const runsByPr = new Map<string, { ranAt: Date | null; costUsd: number | null }[]>();
+      for (const r of runRows) {
+        if (!r.prId) continue;
+        const list = runsByPr.get(r.prId) ?? [];
+        list.push(r);
+        runsByPr.set(r.prId, list);
+      }
+      for (const [prId, runs] of runsByPr) {
+        const cost = latestReviewCost(runs);
+        if (cost != null) costByPr.set(prId, cost);
       }
     }
 
@@ -153,6 +183,7 @@ export default async function pullsRoutes(appBase: FastifyInstance) {
         opened_at: r.openedAt?.toISOString() ?? null,
         updated_at: r.updatedAt?.toISOString() ?? null,
         score: review ? review.score : null,
+        cost_usd: costByPr.get(r.id) ?? null,
       };
     });
   });

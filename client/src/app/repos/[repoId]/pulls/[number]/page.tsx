@@ -177,6 +177,7 @@ export default function PRDetailPage() {
           prNumber={pr.number}
           findings={runs.find((r) => r.run_id === traceRunId)?.findings ?? []}
           agentName={runs.find((r) => r.run_id === traceRunId)?.agent_name ?? null}
+          costUsd={prRuns?.find((r) => r.run_id === traceRunId)?.cost_usd ?? null}
           onClose={() => setParam("trace", null)}
         />
       )}

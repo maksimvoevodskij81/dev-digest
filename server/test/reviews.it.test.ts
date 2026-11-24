@@ -212,6 +212,41 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     await app.close();
   });
 
+  it('run cost: the run stores the LLM cost and both GET routes return it', async () => {
+    const app = await appWith(REVIEW_FIXTURE);
+    const { repo, pr } = await setupRepoAndPr(pg.handle.db, workspaceId);
+    const agent = (
+      await app.inject({
+        method: 'POST',
+        url: '/agents',
+        payload: { name: 'Cost', provider: 'openai', model: 'gpt-4.1', system_prompt: 'cost' },
+      })
+    ).json();
+
+    const body = (
+      await app.inject({ method: 'POST', url: `/pulls/${pr.id}/review`, payload: { agentId: agent.id } })
+    ).json();
+    await waitForPrRuns(pg.handle.db, pr.id, { expected: 1 });
+    const runId = body.runs[0].run_id;
+
+    // MockLLMProvider charges $0.001 per call; map-reduce makes one or more calls.
+    const [run] = await pg.handle.db.select().from(t.agentRuns).where(eq(t.agentRuns.id, runId));
+    expect(run!.costUsd).not.toBeNull();
+    const calls = Math.round(run!.costUsd! / 0.001);
+    expect(calls).toBeGreaterThanOrEqual(1);
+    expect(run!.costUsd!).toBeCloseTo(calls * 0.001, 9);
+
+    const runs = (await app.inject({ method: 'GET', url: `/pulls/${pr.id}/runs` })).json();
+    expect(runs[0].cost_usd).toBeCloseTo(run!.costUsd!, 9);
+
+    // PR list: cost of the latest review's run.
+    const pulls = (await app.inject({ method: 'GET', url: `/repos/${repo.id}/pulls` })).json();
+    const row = pulls.find((p: { number: number }) => p.number === pr.number);
+    expect(row.cost_usd).toBeCloseTo(run!.costUsd!, 9);
+
+    await app.close();
+  });
+
   it('dual-provider structured output: anthropic provider returns the same Review shape', async () => {
     const app = await appWith(REVIEW_FIXTURE, 'anthropic');
     const { pr } = await setupRepoAndPr(pg.handle.db, workspaceId);

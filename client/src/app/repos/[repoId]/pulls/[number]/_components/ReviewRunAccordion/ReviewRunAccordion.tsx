@@ -10,7 +10,7 @@ import { Icon, Badge } from "@devdigest/ui";
 import type { ReviewRecord, Verdict } from "@devdigest/shared";
 import { FindingsPanel } from "../FindingsPanel";
 import { VerdictBanner } from "../VerdictBanner";
-import { useDeleteReview } from "../../../../../../../lib/hooks/reviews";
+import { useDeleteReview, usePrRuns } from "../../../../../../../lib/hooks/reviews";
 
 const VERDICT_COLOR: Record<string, string> = {
   request_changes: "var(--crit)",
@@ -43,6 +43,13 @@ export function ReviewRunAccordion({
   targetNonce?: number;
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
+  // Cost lives on the run row, not the review: find this review's run in the
+  // PR's run history (same React Query cache the Timeline uses, no extra request).
+  const { data: runs } = usePrRuns(prId);
+  const run = review.run_id ? runs?.find((r) => r.run_id === review.run_id) : undefined;
+  const cost = run
+    ? { costUsd: run.cost_usd, tokensIn: run.tokens_in, tokensOut: run.tokens_out }
+    : null;
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
     if (review.run_id && review.run_id === targetRunId) {
@@ -144,6 +151,7 @@ export function ReviewRunAccordion({
                 findingsCount={findings.length}
                 blockers={blockers}
                 agentName={review.agent_name}
+                cost={cost}
               />
             </div>
           )}
