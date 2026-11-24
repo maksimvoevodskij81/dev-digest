@@ -14,6 +14,7 @@ Append-only. Each entry: date, what, evidence (file:line). Only what is not obvi
 
 ## Decisions
 - 2026-11-24 · PR list COST = the latest review, not the latest run and not the sum: "Run all agents" starts several runs within seconds and there is no batch id, so priced runs within 2 min of the newest count as one review (lab: "$ of the last run") · evidence: server/src/modules/pulls/run-cost.ts:9 (latestReviewCost)
+- 2026-11-25 · supersedes: 2026-11-24 · PR list COST = the SUM of all priced runs of the PR; the mentor rejected "latest review" and showed the reference (two $0.038 runs → $0.076). When the slide text and the mentor's demo disagree, the demo is what gets graded · evidence: server/src/modules/pulls/routes.ts (costByPr, sum over agent_runs.cost_usd)
 
 ## Recurring Errors & Fixes
 - 2026-11-24 · `*.it.test.ts` fails with "Could not find a working container runtime strategy" although `docker` works: Docker here is Colima, with no /var/run/docker.sock. Run with `DOCKER_HOST=unix://$HOME/.colima/default/docker.sock TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock TESTCONTAINERS_RYUK_DISABLED=true pnpm exec vitest run .it.test` · evidence: server/test/helpers/pg.ts:36 (PostgreSqlContainer)

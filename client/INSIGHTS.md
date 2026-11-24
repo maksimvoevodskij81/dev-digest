@@ -15,6 +15,7 @@ Append-only. Each entry: date, what, evidence (file:line). Only what is not obvi
 
 ## Decisions
 - 2026-11-24 · Run cost is shown only where the written L01 lab asks: PR list COST column, verdict banner, run trace drawer; a cost next to each run's time in RunHistory was built, then removed at the user's request (the video prompts are not the spec) · evidence: client/src/app/repos/[repoId]/pulls/[number]/_components/RunTraceDrawer/_components/TraceBody/TraceBody.tsx (TraceBody)
+- 2026-11-25 · supersedes: 2026-11-24 · The mentor's reference DOES show cost per run in the Timeline ("16640 tok · $0.038" under the time), so RunHistory rows show tokens + cost again; the lab video prompts were the real spec after all · evidence: client/src/app/repos/[repoId]/pulls/[number]/_components/RunHistory/RunHistory.tsx (timeline.runCost)
 - 2026-11-22 · Severity counter buttons are disabled at count 0 but stay enabled while active, so the user can still clear a filter after hide-low drops that level to 0 · evidence: client/src/app/repos/[repoId]/pulls/[number]/_components/FindingsPanel/FindingsPanel.tsx:74 (FindingsPanel)
 
 ## Recurring Errors & Fixes

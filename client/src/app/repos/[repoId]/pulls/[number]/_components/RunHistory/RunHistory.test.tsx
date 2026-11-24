@@ -73,3 +73,18 @@ describe("RunHistory — outcome badge", () => {
     expect(screen.getByText("running")).toBeInTheDocument();
   });
 });
+
+describe("RunHistory — run cost", () => {
+  it("shows tokens and cost of a finished run next to its time", () => {
+    renderRuns([{ ...run({ tokens_in: 4977, tokens_out: 553 }), cost_usd: 0.00018 } as RunSummary]);
+    expect(screen.getByText("5530 tok · $0.00018")).toBeInTheDocument();
+  });
+
+  it("shows a dash for the cost of a run without one, nothing for a running run", () => {
+    const { unmount } = renderRuns([run({})]);
+    expect(screen.getByText("150 tok · —")).toBeInTheDocument();
+    unmount();
+    renderRuns([run({ status: "running" })]);
+    expect(screen.queryByText(/ tok · /)).not.toBeInTheDocument();
+  });
+});

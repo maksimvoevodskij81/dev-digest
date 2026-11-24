@@ -17,6 +17,6 @@ export const CostUsd = z.number().nonnegative().nullable();
 export const RunSummaryWithCost = RunSummary.extend({ cost_usd: CostUsd });
 export type RunSummaryWithCost = z.infer<typeof RunSummaryWithCost>;
 
-/** One PR in the list, with the cost of its latest review (all runs started together). */
+/** One PR in the list, with the total cost of all its runs. */
 export const PrMetaWithCost = PrMeta.extend({ cost_usd: CostUsd.optional() });
 export type PrMetaWithCost = z.infer<typeof PrMetaWithCost>;

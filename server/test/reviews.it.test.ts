@@ -239,10 +239,15 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     const runs = (await app.inject({ method: 'GET', url: `/pulls/${pr.id}/runs` })).json();
     expect(runs[0].cost_usd).toBeCloseTo(run!.costUsd!, 9);
 
-    // PR list: cost of the latest review's run.
+    // A second run on the same PR: the PR list shows the SUM of all its runs.
+    await app.inject({ method: 'POST', url: `/pulls/${pr.id}/review`, payload: { agentId: agent.id } });
+    const allRuns = await waitForPrRuns(pg.handle.db, pr.id, { expected: 2 });
+    const total = allRuns.reduce((sum, r) => sum + (r.costUsd ?? 0), 0);
+    expect(total).toBeGreaterThan(run!.costUsd!);
+
     const pulls = (await app.inject({ method: 'GET', url: `/repos/${repo.id}/pulls` })).json();
     const row = pulls.find((p: { number: number }) => p.number === pr.number);
-    expect(row.cost_usd).toBeCloseTo(run!.costUsd!, 9);
+    expect(row.cost_usd).toBeCloseTo(total, 9);
 
     await app.close();
   });
