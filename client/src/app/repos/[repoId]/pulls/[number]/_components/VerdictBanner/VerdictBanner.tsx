@@ -1,11 +1,13 @@
 /* VerdictBanner — ported from findings.jsx.
-   request_changes / approve / comment + summary + finding/blocker counts + score. */
+   request_changes / approve / comment + summary + finding/blocker counts + score
+   + the run's cost ("$0.014 · 8.2K→1.3K"). */
 "use client";
 
 import React from "react";
 import { useTranslations } from "next-intl";
 import { Icon, Badge, CircularScore } from "@devdigest/ui";
 import type { Verdict } from "@devdigest/shared";
+import { RunCostBadge, type RunCost } from "@/components/run-cost-badge";
 import { VERDICT_META } from "./constants";
 import { s } from "./styles";
 
@@ -16,6 +18,7 @@ export function VerdictBanner({
   findingsCount,
   blockers,
   agentName,
+  cost,
 }: {
   verdict: Verdict;
   summary: string | null;
@@ -23,6 +26,8 @@ export function VerdictBanner({
   findingsCount: number;
   blockers: number;
   agentName?: string | null;
+  /** Cost + tokens of the run that produced this review. Undefined = no cost row. */
+  cost?: RunCost | null;
 }) {
   const t = useTranslations("prReview");
   const m = VERDICT_META[verdict] ?? VERDICT_META.comment;
@@ -44,6 +49,7 @@ export function VerdictBanner({
               {agentName}
             </Badge>
           )}
+          {cost !== undefined && <RunCostBadge cost={cost} variant="full" />}
         </div>
         {summary && <p style={s.summary}>{summary}</p>}
       </div>

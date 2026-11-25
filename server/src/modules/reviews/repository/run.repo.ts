@@ -1,7 +1,8 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Db } from '../../../db/client.js';
 import * as t from '../../../db/schema.js';
-import type { RunSummary, RunTrace } from '@devdigest/shared';
+import type { RunTrace } from '@devdigest/shared';
+import type { RunSummaryWithCost } from '@devdigest/shared/contracts/run-cost.js';
 
 // ---- in-flight / history --------------------------------------------------
 
@@ -41,7 +42,7 @@ export async function listRunsForPull(
   db: Db,
   workspaceId: string,
   prId: string,
-): Promise<RunSummary[]> {
+): Promise<RunSummaryWithCost[]> {
   const rows = await db
     .select({ run: t.agentRuns, agentName: t.agents.name })
     .from(t.agentRuns)
@@ -59,6 +60,7 @@ export async function listRunsForPull(
     duration_ms: run.durationMs,
     tokens_in: run.tokensIn,
     tokens_out: run.tokensOut,
+    cost_usd: run.costUsd,
     findings_count: run.findingsCount,
     grounding: run.grounding,
     ran_at: run.ranAt ? run.ranAt.toISOString() : null,
@@ -152,6 +154,8 @@ export async function completeAgentRun(
     score?: number | null;
     /** Findings that tripped the agent's gate; 0 on failed/cancelled runs. */
     blockers?: number | null;
+    /** Run cost in USD; null = unknown (failed/cancelled or no price). */
+    costUsd?: number | null;
     /** Failure reason (status='failed') / cancellation note. Null clears it. */
     error?: string | null;
   },
@@ -163,6 +167,7 @@ export async function completeAgentRun(
       durationMs: values.durationMs,
       tokensIn: values.tokensIn,
       tokensOut: values.tokensOut,
+      costUsd: values.costUsd ?? null,
       findingsCount: values.findingsCount,
       grounding: values.grounding,
       score: values.score ?? null,

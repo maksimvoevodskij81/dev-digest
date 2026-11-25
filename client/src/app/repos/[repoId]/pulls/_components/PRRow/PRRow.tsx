@@ -5,12 +5,13 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Icon, Avatar, Badge, CircularScore } from "@devdigest/ui";
-import type { PrMeta } from "@/lib/types";
+import type { PrMetaWithCost } from "@devdigest/shared/contracts/run-cost";
+import { RunCostBadge } from "@/components/run-cost-badge";
 import { SIZE_COLOR, STATUS_META } from "../../constants";
 import { relativeTime, sizeOf } from "../../helpers";
 import { s } from "../../styles";
 
-export function PRRow({ pr, repoId }: { pr: PrMeta; repoId: string }) {
+export function PRRow({ pr, repoId }: { pr: PrMetaWithCost; repoId: string }) {
   const t = useTranslations("prReview");
   const router = useRouter();
   const [h, setH] = React.useState(false);
@@ -52,6 +53,10 @@ export function PRRow({ pr, repoId }: { pr: PrMeta; repoId: string }) {
         ) : (
           <span style={s.muted}>—</span>
         )}
+      </div>
+      <div>
+        {/* Cost of the latest review run; "—" when unreviewed or no cost recorded. */}
+        <RunCostBadge cost={{ costUsd: pr.cost_usd }} variant="compact" />
       </div>
       <div>
         <Badge dot color={st.c} bg="transparent">

@@ -30,4 +30,27 @@ describe("VerdictBanner (smoke)", () => {
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText(/1 findings · 1 blockers/)).toBeInTheDocument();
   });
+
+  it("shows the run cost line when the run has cost data", () => {
+    renderWithIntl(
+      <VerdictBanner
+        verdict="comment"
+        summary={null}
+        score={76}
+        findingsCount={2}
+        blockers={0}
+        cost={{ costUsd: 0.0144, tokensIn: 8240, tokensOut: 1310 }}
+      />,
+    );
+    expect(screen.getByText("$0.014 · 8.2K→1.3K")).toBeInTheDocument();
+  });
+
+  it("shows a dash for a run without cost data, and nothing without a run", () => {
+    const base = { verdict: "comment" as const, summary: null, score: 76, findingsCount: 0, blockers: 0 };
+    const { unmount } = renderWithIntl(<VerdictBanner {...base} cost={null} />);
+    expect(screen.getByLabelText("No cost data for this run")).toHaveTextContent("—");
+    unmount();
+    renderWithIntl(<VerdictBanner {...base} />);
+    expect(screen.queryByLabelText("No cost data for this run")).not.toBeInTheDocument();
+  });
 });

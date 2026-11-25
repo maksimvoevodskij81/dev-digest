@@ -4,6 +4,10 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { Badge, Icon, CircularScore, type IconName } from "@devdigest/ui";
 import type { RunSummary, PrCommit } from "@devdigest/shared";
+import { formatCost } from "@/components/run-cost-badge/format";
+
+/** A run row; cost_usd comes from the cost-aware runs API (absent in older data). */
+type RunRow = RunSummary & { cost_usd?: number | null };
 
 /**
  * PR timeline — every agent run interleaved with the PR's commits, newest-first
@@ -19,7 +23,7 @@ import type { RunSummary, PrCommit } from "@devdigest/shared";
 
 type Outcome = { key: string; color: string; bg: string; icon: IconName };
 
-function outcomeOf(run: RunSummary): Outcome {
+function outcomeOf(run: RunRow): Outcome {
   const status = run.status ?? "";
   if (status === "running")
     return { key: "running", color: "var(--accent)", bg: "var(--accent-bg)", icon: "RefreshCw" };
@@ -74,7 +78,7 @@ const commitRowStyle: React.CSSProperties = {
 };
 
 type TimelineItem =
-  | { kind: "run"; ts: number; run: RunSummary }
+  | { kind: "run"; ts: number; run: RunRow }
   | { kind: "commit"; ts: number; commit: PrCommit };
 
 /** Epoch ms for sorting; unparseable / missing timestamps sort last. */
@@ -91,7 +95,7 @@ export function RunHistory({
   onGoToReview,
   onDelete,
 }: {
-  runs: RunSummary[];
+  runs: RunRow[];
   commits?: PrCommit[];
   /** Open the trace + log drawer for a run (the logs icon). */
   onOpenTrace: (runId: string) => void;
@@ -197,6 +201,15 @@ export function RunHistory({
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
               {r.ran_at && <span>{new Date(r.ran_at).toLocaleTimeString()}</span>}
+              {/* Tokens and cost of this run, once it finished: "5530 tok · $0.00018". */}
+              {settled && (
+                <span className="mono">
+                  {t("timeline.runCost", {
+                    tokens: (r.tokens_in ?? 0) + (r.tokens_out ?? 0),
+                    cost: formatCost(r.cost_usd),
+                  })}
+                </span>
+              )}
             </div>
             <button
               type="button"
